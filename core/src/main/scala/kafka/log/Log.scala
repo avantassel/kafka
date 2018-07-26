@@ -1362,10 +1362,15 @@ class Log(@volatile var dir: File,
   }
 
   private def deleteRetentionMsBreachedSegments(): Int = {
-    if (config.retentionMs < 0) return 0
+    if (config.retentionMs == 0) return 0
     val startMs = time.milliseconds
-    deleteOldSegments((segment, _) => startMs - segment.largestTimestamp > config.retentionMs,
-      reason = s"retention time ${config.retentionMs}ms breach")
+    if (config.retentionMs < 0) {
+      deleteOldSegments((segment, _) => startMs - segment.largestTimestamp < config.retentionMs,
+        reason = s"retention time ${config.retentionMs}ms breach")
+    } else {
+      deleteOldSegments((segment, _) => startMs - segment.largestTimestamp > config.retentionMs,
+        reason = s"retention time ${config.retentionMs}ms breach")
+    }
   }
 
   private def deleteRetentionSizeBreachedSegments(): Int = {
